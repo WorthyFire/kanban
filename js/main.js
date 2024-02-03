@@ -1,13 +1,131 @@
-// main.js
-
-Vue.component('board', {
+Vue.component('task-form', {
+    props: [],
     template: `
+    <div class="content_form">
+        <form @submit.prevent="addTask">
+            <label for="task-name">Создайте новую задачу:</label>
+            <input class="input" id="task-name" type="text" v-model="taskName"><br><br>
+            <label for="task-desc">Описание задачи:</label>
+            <textarea id="task-desc" v-model="description"></textarea><br><br>
+            <label for="deadline">Срок сдачи:</label>
+            <input type="date" id="deadline" v-model="deadline" name="deadline-task" min="2024-01-01" max="2025-12-31" required />
+            <button type="submit">Создать</button>
+        </form>
+    </div>
+    `,
+    data() {
+        return {
+            taskName: '',
+            description: '',
+            deadline: ''
+        };
+    },
+    methods: {
+        addTask() {
+            if (this.taskName !== '') {
+                const newTask = {
+                    title: this.taskName,
+                    description: this.description,
+                    deadline: this.deadline,
+                    reason: ''
+                };
+                newTask.createdDate = new Date().toLocaleDateString();
+                this.$emit('add', newTask);
+                this.taskName = '';
+                this.description = '';
+                this.deadline = '';
+            } else {
+                alert("Введите название задачи");
+            }
+        }
+    }
+});
+
+Vue.component('task', {
+    props: ['task', 'type'],
+    data() {
+        return {
+            editingDescription: false,
+            editedDescription: ''
+        };
+    },
+    methods: {
+        handleEditDescription() {
+            if (this.editingDescription) {
+                this.task.description = this.editedDescription;
+                this.task.lastEdited = new Date().toLocaleString(); // Обновляем время последнего редактирования
+            }
+            this.editingDescription = !this.editingDescription;
+        },
+        handleDeleteTask() {
+            this.$emit('delete', this.task);
+        },
+        handleMoveTask() {
+            if (this.type === 'plan') {
+                this.$emit('move', this.task);
+            } else if (this.type === 'work') {
+                this.$emit('move-to-next', this.task);
+            }
+        },
+        handleMoveToNext() {
+            if (this.type === 'work') {
+                this.$emit('move-to-testing', this.task);
+            }
+        }
+    },
+    template: `
+    <div class="task">
+        <span>Создано: {{ task.createdDate }}</span>
+        <h3>{{ task.title }}</h3>
+        <p v-if="!editingDescription">{{ task.description }}</p>
+        <textarea v-model="editedDescription" v-if="editingDescription"></textarea>
+        <span v-if="task.lastEdited">Отредактировано: {{ task.lastEdited }}</span><br><br>
+        <span>Срок сдачи: {{ task.deadline }}</span><br><br>
+        <button v-if="type !== 'completed'" @click="handleEditDescription">{{ editingDescription ? 'Сохранить' : 'Редактировать' }}</button>
+        <button v-if="type !== 'completed'" @click="handleDeleteTask">Удалить</button>
+        <button v-if="type === 'plan'" @click="handleMoveTask">Переместить</button>
+        <button v-if="type === 'work'" @click="handleMoveToNext">Переместить</button>
+    </div>
+    `
+});
+
+Vue.component('task-column', {
+    props: ['title', 'tasks', 'type'],
+    template: `
+    <div class="column">
+        <h2 class="title_column">{{ title }}</h2>
+        <task v-for="task in tasks" :key="task.id" :task="task" :type="type" @delete="handleDeleteTask" @move="handleMoveTask" @move-to-next="handleMoveToNext"></task>
+    </div>
+    `,
+    methods: {
+        handleDeleteTask(task) {
+            this.$emit('delete-task', task);
+        },
+        handleMoveTask(task) {
+            this.$emit('move-task', task);
+        },
+        handleMoveToNext(task) {
+            if (this.type === 'plan') {
+                this.$emit('move-to-next', task);
+            } else if (this.type === 'work') {
+                this.$emit('move-to-testing', task);
+            }
+        },
+    }
+});
+
+
+Vue.component('app', {
+    template: `
+    <div id="app">
+        <task-form @add="addTask"></task-form>
         <div class="board">
-            <column title="Запланированные задачи" :tasks="planTask" @task-moved="moveTask" @task-added="addTask"></column>
-            <column title="Задачи в работе" :tasks="workTask" @task-moved="moveTask"></column>
-            <column title="Тестирование" :tasks="testingTask" @task-moved="moveTask"></column>
-            <column title="Выполненные задачи" :tasks="completedTask"></column>
+            <task-column title="Запланированные задачи" :tasks="planTask" type="plan" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext"></task-column>
+            <task-column title="В работе" :tasks="workTask" type="work" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext"></task-column>
+            <task-column title="Тестирование" :tasks="testingTask" type="testing" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext"></task-column>
+            <task-column title="Выполненные задачи" :tasks="completedTask" type="completed"></task-column>
         </div>
+    </div>
     `,
     data() {
         return {
@@ -18,90 +136,31 @@ Vue.component('board', {
         };
     },
     methods: {
-        moveTask(task, destination) {
-            if (destination === 'work') {
-                this.workTask.push(task);
-                this.planTask.splice(this.planTask.indexOf(task), 1);
-            } else if (destination === 'testing') {
-                this.testingTask.push(task);
-                this.workTask.splice(this.workTask.indexOf(task), 1);
-            } else if (destination === 'completed') {
-                // Move to completed, handle deadline logic
-            }
-        },
         addTask(task) {
             this.planTask.push(task);
-        }
-    }
-});
-
-Vue.component('column', {
-    props: ['title', 'tasks'],
-    data() {
-        return {
-            newTaskName: '',
-            newTaskDescription: '',
-            newTaskDeadline: ''
-        };
-    },
-    template: `
-        <div class="column">
-            <h2 class="title_column">{{ title }}</h2>
-            <div v-for="task in tasks" :key="task.id" class="task">
-                <card :task="task" @move="moveTask"></card>
-            </div>
-            <div class="content_form" v-if="title === 'Запланированные задачи'">
-                <form @submit.prevent="addTask">
-                    <label for="task-name">Создайте новую задачу:</label>
-                    <input class="input" id="task-name" type="text" v-model="newTaskName"><br><br>
-                    <label for="task-desc">Описание задачи:</label>
-                    <textarea id="task-desc" v-model="newTaskDescription"></textarea><br><br>
-                    <label for="deadline">Срок сдачи:</label>
-                    <input type="date" id="deadline" v-model="newTaskDeadline" name="deadline-task" min="2024-01-01" max="2025-12-31" required />
-                    <button type="submit">Создать</button>
-                </form>
-            </div>
-        </div>
-    `,
-    methods: {
-        moveTask(task, destination) {
-            this.$emit('task-moved', task, destination);
         },
-        addTask() {
-            const newTask = {
-                id: Math.random().toString(36).substring(7),
-                title: this.newTaskName,
-                description: this.newTaskDescription,
-                deadline: this.newTaskDeadline,
-                createdDate: new Date().toLocaleDateString()
-            };
-            this.$emit('task-added', newTask);
-            this.newTaskName = '';
-            this.newTaskDescription = '';
-            this.newTaskDeadline = '';
-        }
-    }
-});
-
-Vue.component('card', {
-    props: ['task'],
-    template: `
-        <div class="task">
-            <span>Создано: {{ task.createdDate }}</span>
-            <h3>{{ task.title }}</h3>
-            <p>{{ task.description }}</p>
-            <span>Срок сдачи: {{ task.deadline }}</span><br><br>
-            <button v-on:click="editTask">Редактировать</button>
-            <button v-on:click="moveToWork">Переместить в работу</button>
-            <!-- Add more buttons for moving to testing, completing, etc. -->
-        </div>
-    `,
-    methods: {
-        editTask() {
-
+        deleteTask(task) {
+            const index = this.planTask.indexOf(task);
+            if (index !== -1) {
+                this.planTask.splice(index, 1);
+            }
+            // Implement similar deletion logic for other task types if needed
         },
-        moveToWork() {
-            this.$emit('move', this.task, 'work');
+        moveTask(task) {
+            const index = this.planTask.indexOf(task);
+            if (index !== -1) {
+                this.planTask.splice(index, 1);
+                this.workTask.push(task);
+            }
+        },
+        moveToNext(task) {
+            if (this.workTask.includes(task)) {
+                this.workTask.splice(this.workTask.indexOf(task), 1);
+                this.testingTask.push(task);
+            } else if (this.testingTask.includes(task)) {
+                this.testingTask.splice(this.testingTask.indexOf(task), 1);
+                this.completedTask.push(task);
+            }
         }
     }
 });
