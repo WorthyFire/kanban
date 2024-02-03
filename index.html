@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kanban</title>
+    <link rel="stylesheet" href="css/main.css">
+    <script defer src="js/vue.js"></script>
+    <script defer src="js/main.js"></script>
+
+</head>
+<body>
+<div id="app">
+
+    <div class="board">
+        <div class="column">
+            <h2 class="title_column">Запланированные задачи</h2>
+            <div class="content_form">
+                <form @submit.prevent="addTask">
+                    <label for="task-name">Создайте новую задачу:</label>
+                    <input  class="input" id="task-name" type="text" v-model="taskName"><br><br>
+                    <label for="task-desc">Описание задачи:</label>
+                    <textarea id="task-desc" v-model="description"></textarea><br><br>
+                    <label for="deadline">Срок сдачи:</label>
+                    <input type="date" id="deadline" v-model="deadline" name="deadline-task" min="2024-01-01" max="2025-12-31" required />
+                    <button type="submit">Создать</button>
+                </form>
+            </div>
+
+            <div v-for="task in planTask" :key="task.id" class="task">
+                <span>Создано: {{task.createdDate }}</span>
+                <h3>{{ task.title }}</h3>
+                <p>{{task.description}}</p>
+                <span>Срок сдачи: {{task.deadline}}</span><br><br>
+                <button v-on:click="removeTask(task)" class="btn">Удалить</button>
+                <button  v-on:click="updateTask(task)">Редактировать</button>
+                <button  v-on:click="moveFromPlanTask(task)"><i class="arrow right"></i></button>
+            </div>
+
+
+        </div>
+        <div class="column">
+            <h2 class="title_column">В работе</h2>
+            <div v-for="task in workTask" :key="task.id" class="task">
+                <span>Создано: {{task.createdDate }}</span>
+                <h3>{{ task.title }}</h3>
+                <p>{{task.description}}</p><br>
+                {{task.reason}}
+                <span>Срок сдачи: {{task.deadline}}</span><br><br>
+                <button  v-on:click="updateTask(task)">Редактировать</button>
+                <button  v-on:click="moveFromWorkTask(task)"><i class="arrow right"></i></button>
+
+            </div>
+        </div>
+        <div class="column">
+            <h2 class="title_column">Тестирование</h2>
+            <div v-for="task in testingTask" :key="task.id" class="task">
+                <span>Создано: {{task.createdDate }}</span>
+                <h3>{{ task.title }}</h3>
+                <p>{{task.description}}</p>
+                <span>Срок сдачи: {{task.deadline}}</span><br><br>
+                <button  v-on:click="updateTask(task)">Редактировать</button>
+                <label >Укажите причину:</label>
+                <input  type="text" v-model="task.reason"/><br><br>
+                <button v-on:click="moveFromTestingTaskBack(task)" :disabled="task.reason === ''" ><i class="arrow left"></i></button>
+
+                <button v-on:click="moveFromTestingTask(task)"><i class="arrow right"></i></button>
+
+            </div>
+        </div>
+        <div class="column">
+            <h2 class="title_column">Выполненные задачи</h2>
+            <div v-for="task in completedTask" :key="task.id" class="task">
+                <span>Создано: {{task.createdDate }}</span>
+                <h3>{{ task.title }}</h3>
+                <p>{{task.description}}</p>
+                <span>Срок сдачи: {{task.deadline}}</span><br><br>
+                <p :disabled="checked">Выполнено в срок!</p>
+                <p :disabled="!checked">Просрочено!</p>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
