@@ -158,9 +158,13 @@ Vue.component('app', {
             completedTask: []
         };
     },
+    created() {
+        this.loadTasks();
+    },
     methods: {
         addTask(task) {
             this.planTask.push(task);
+            this.saveTasks();
         },
         deleteTask(task) {
             const indexPlan = this.planTask.indexOf(task);
@@ -177,6 +181,7 @@ Vue.component('app', {
             } else if (indexCompleted !== -1) {
                 this.completedTask.splice(indexCompleted, 1);
             }
+            this.saveTasks();
         },
         moveTask(task) {
             const indexPlan = this.planTask.indexOf(task);
@@ -198,6 +203,7 @@ Vue.component('app', {
                     task.check = 'Просрочено';
                 }
             }
+            this.saveTasks();
         },
         moveToNext(task) {
             const indexWork = this.workTask.indexOf(task);
@@ -215,10 +221,12 @@ Vue.component('app', {
                     task.check = 'Просрочено';
                 }
             }
+            this.saveTasks();
         },
         returnTask(task) {
             this.testingTask.splice(this.testingTask.indexOf(task), 1);
             this.workTask.push(task);
+            this.saveTasks();
         },
         completeTask(task) {
             this.testingTask.splice(this.testingTask.indexOf(task), 1);
@@ -227,6 +235,24 @@ Vue.component('app', {
                 task.check = 'Выполнено в срок';
             } else {
                 task.check = 'Просрочено';
+            }
+            this.saveTasks();
+        },
+        saveTasks() {
+            localStorage.setItem('tasks', JSON.stringify({
+                planTask: this.planTask,
+                workTask: this.workTask,
+                testingTask: this.testingTask,
+                completedTask: this.completedTask
+            }));
+        },
+        loadTasks() {
+            const tasksData = JSON.parse(localStorage.getItem('tasks'));
+            if (tasksData) {
+                this.planTask = tasksData.planTask || [];
+                this.workTask = tasksData.workTask || [];
+                this.testingTask = tasksData.testingTask || [];
+                this.completedTask = tasksData.completedTask || [];
             }
         }
     }
