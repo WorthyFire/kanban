@@ -46,7 +46,8 @@ Vue.component('task', {
     data() {
         return {
             editingDescription: false,
-            editedDescription: ''
+            editedDescription: '',
+            returnReason: ''
         };
     },
     methods: {
@@ -71,6 +72,17 @@ Vue.component('task', {
             if (this.type === 'work') {
                 this.$emit('move-to-next', this.task);
             }
+        },
+        handleReturnToPrevious() {
+            if (this.returnReason !== '') {
+                this.task.reason = this.returnReason;
+                this.$emit('return', this.task);
+            } else {
+                alert("Введите причину возврата");
+            }
+        },
+        handleCompleteTask() {
+            this.$emit('complete', this.task);
         }
     },
     template: `
@@ -85,19 +97,21 @@ Vue.component('task', {
         <button v-if="type !== 'completed'" @click="handleEditDescription">{{ editingDescription ? 'Сохранить' : 'Редактировать' }}</button>
         <button v-if="type === 'plan'" @click="handleMoveTask">Переместить</button>
         <button v-if="type === 'work'" @click="handleMoveToNext">Переместить</button>
+        <button v-if="type === 'testing'" @click="handleReturnToPrevious">Вернуть</button>
+        <button v-if="type === 'testing'" @click="handleCompleteTask">Выполнено</button>
+        <br>
+        <textarea v-if="type === 'testing'" v-model="returnReason" placeholder="Введите причину возврата"></textarea>
+        <span v-if="type === 'work' && task.reason">Причина возврата: {{ task.reason }}</span>
     </div>
     `
 });
-
-
-
 
 Vue.component('task-column', {
     props: ['title', 'tasks', 'type'],
     template: `
     <div class="column">
         <h2 class="title_column">{{ title }}</h2>
-        <task v-for="task in tasks" :key="task.id" :task="task" :type="type" @delete="handleDeleteTask" @move="moveTask" @move-to-next="moveToNext"></task>
+        <task v-for="task in tasks" :key="task.id" :task="task" :type="type" @delete="handleDeleteTask" @move="moveTask" @move-to-next="moveToNext" @return="returnTask" @complete="completeTask"></task>
     </div>
     `,
     methods: {
@@ -108,8 +122,18 @@ Vue.component('task-column', {
             this.$emit('move-task', task);
         },
         moveToNext(task) {
+            const indexTesting = this.tasks.indexOf(task);
+            if (this.type === 'work' && indexTesting !== -1 && task.reason) {
+                task.reason = '';
+            }
             this.$emit('move-to-next', task);
         },
+        returnTask(task) {
+            this.$emit('return-task', task);
+        },
+        completeTask(task) {
+            this.$emit('complete-task', task);
+        }
     }
 });
 
@@ -118,9 +142,9 @@ Vue.component('app', {
     <div id="app">
         <task-form @add="addTask"></task-form>
         <div class="board">
-            <task-column title="Запланированные задачи" :tasks="planTask" type="plan" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext"></task-column>
-            <task-column title="В работе" :tasks="workTask" type="work" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext"></task-column>
-            <task-column title="Тестирование" :tasks="testingTask" type="testing" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext"></task-column>
+            <task-column title="Запланированные задачи" :tasks="planTask" type="plan" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext" @return-task="returnTask" @complete-task="completeTask"></task-column>
+            <task-column title="В работе" :tasks="workTask" type="work" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext" @return-task="returnTask" @complete-task="completeTask"></task-column>
+            <task-column title="Тестирование" :tasks="testingTask" type="testing" @delete-task="deleteTask" @move-task="moveTask" @move-to-next="moveToNext" @return-task="returnTask" @complete-task="completeTask"></task-column>
             <task-column title="Выполненные задачи" :tasks="completedTask" type="completed"></task-column>
         </div>
     </div>
@@ -189,6 +213,19 @@ Vue.component('app', {
                 } else {
                     task.check = 'Просрочено';
                 }
+            }
+        },
+        returnTask(task) {
+            this.testingTask.splice(this.testingTask.indexOf(task), 1);
+            this.workTask.push(task);
+        },
+        completeTask(task) {
+            this.testingTask.splice(this.testingTask.indexOf(task), 1);
+            this.completedTask.push(task);
+            if (task.deadline >= task.createdDate) {
+                task.check = 'Выполнено в срок';
+            } else {
+                task.check = 'Просрочено';
             }
         }
     }
