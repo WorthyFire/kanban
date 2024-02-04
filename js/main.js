@@ -102,6 +102,7 @@ Vue.component('task', {
         <br>
         <textarea v-if="type === 'testing'" v-model="returnReason" placeholder="Введите причину возврата"></textarea>
         <span v-if="type === 'work' && task.reason">Причина возврата: {{ task.reason }}</span>
+        <span v-if="type === 'completed'">{{ task.check }}</span>
     </div>
     `
 });
