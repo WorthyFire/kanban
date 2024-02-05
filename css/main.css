@@ -1,36 +1,111 @@
-.board {
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+#app {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
 }
-.column {
-    flex: 1;
-    margin: 10px;
-    padding: 10px;
+
+.content_form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 400px;
+}
+
+.input {
+    width: calc(100% - 10px);
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px;
     border: 1px solid #ccc;
+    border-radius: 4px;
 }
-.task {
-    background-color: #f2f2f2;
-    margin: 5px 0;
-    padding: 5px;
+
+form label {
+    font-weight: bold;
+}
+
+form button {
+    padding: 8px 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
     cursor: pointer;
 }
 
-.right {
-    transform: rotate(-45deg);
-    -webkit-transform: rotate(-45deg);
+form button:hover {
+    background-color: #0056b3;
 }
 
-i {
-    border: solid black;
-    border-width: 0 3px 3px 0;
-    display: inline-block;
-    padding: 3px;
+.board {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 20px;
 }
 
-.left {
-    transform: rotate(135deg);
-    -webkit-transform: rotate(135deg);
+.column {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 30%;
+    margin-right: 20px; /* Добавили отступ между колонками */
 }
 
-.content_form{
+.title_column {
+    margin-bottom: 15px;
+}
 
+.task {
+    margin-bottom: 20px;
+    padding: 15px; /* Добавили отступы внутри задачи */
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.task h3 {
+    margin-top: 0;
+}
+
+.task span {
+    font-size: 14px;
+    color: #666;
+}
+
+.task button {
+    margin-top: 10px; /* Добавили отступ над кнопками */
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.task button:hover {
+    background-color: #0056b3;
+}
+
+textarea {
+    width: calc(100% - 10px);
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* Добавили отступ после каждой задачи */
+.task + .task {
+    margin-top: 15px;
 }
